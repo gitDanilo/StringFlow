@@ -1,0 +1,44 @@
+<!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
+<idea-plugin>
+    <id>danilo.cej.stringflow</id>
+    <name>StringFlow</name>
+    <vendor>danilo.cej</vendor>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <resource-bundle>messages.Bundle</resource-bundle>
+
+    <!--    <actions>-->
+    <!--        <action id="danilo.cej.stringflow.actions.StringFlowContextAction"-->
+    <!--                class="danilo.cej.stringflow.actions.StringFlowContextAction"-->
+    <!--                text="Run My Context Action">-->
+    <!--            <add-to-group group-id="EditorPopupMenu" anchor="last"/>-->
+    <!--        </action>-->
+    <!--    </actions>-->
+
+    <extensions defaultExtensionNs="com.intellij">
+        <notificationGroup id="StringFlow Notification Group"
+                           displayType="BALLOON"/>
+        <applicationService
+                serviceImplementation="danilo.cej.stringflow.settings.AppSettings"/>
+        <projectConfigurable
+                parentId="tools"
+                instance="danilo.cej.stringflow.settings.AppSettingsConfigurable"
+                id="danilo.cej.stringflow.settings.AppSettingsConfigurable"
+                displayName="StringFlow Settings"
+                nonDefaultProject="true"/>
+        <!--        <toolWindow id="StringFlow" factoryClass="danilo.cej.stringflow.windows.ToolWindowFactory"-->
+        <!--                    anchor="right"/>-->
+        <intentionAction>
+            <!--            <language>JAVA</language>-->
+            <skipBeforeAfter>true</skipBeforeAfter>
+            <className>danilo.cej.stringflow.extensions.QuickFixIntention</className>
+            <category>Utility</category>
+        </intentionAction>
+    </extensions>
+
+<!--    <applicationListeners>-->
+<!--        <listener class="danilo.cej.stringflow.listeners.ApplicationActivationListener"-->
+<!--                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>-->
+<!--    </applicationListeners>-->
+</idea-plugin>
