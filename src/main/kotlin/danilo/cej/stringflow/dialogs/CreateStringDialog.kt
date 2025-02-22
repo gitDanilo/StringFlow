@@ -3,29 +3,37 @@ package danilo.cej.stringflow.dialogs
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBTextField
+import com.intellij.util.ui.FormBuilder
 import danilo.cej.stringflow.services.ProjectService
-import java.awt.Component
-import java.awt.FlowLayout
-import javax.swing.BoxLayout
+import java.awt.GridBagConstraints
+import java.awt.GridBagLayout
 import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 class CreateStringDialog(keyName: String?) : DialogWrapper(true) {
-    private val keyInput = JBTextField(keyName, 30).apply {
+    private val tfStringKey = JBTextField(keyName, 40).apply {
         emptyText.text = "example_welcome_message"
     }
-    private val textInput = JBTextField(30).apply {
+
+    private val tfStringContent = JBTextField(40).apply {
         emptyText.text = "Welcome to example screen"
     }
 
+    private val tfStringDescription = JBTextField(40).apply {
+        emptyText.text = "Welcome message"
+    }
+
+    private val cbNoTranslation = JBCheckBox("Do not translate")
+
     val key: String
-        get() = keyInput.text
+        get() = tfStringKey.text
 
     val text: String
-        get() = textInput.text
+        get() = tfStringContent.text
 
     init {
         title = "Create String Resource"
@@ -33,35 +41,38 @@ class CreateStringDialog(keyName: String?) : DialogWrapper(true) {
     }
 
     override fun createCenterPanel(): JComponent {
-        val panel = JBPanel<JBPanel<*>>().apply {
-            layout = BoxLayout(this, BoxLayout.Y_AXIS)
-
-            val keyPanel = JBPanel<JBPanel<*>>().apply {
-                layout = FlowLayout(FlowLayout.LEFT)
-                add(JBLabel("String key:"))
-                add(keyInput)
-                maximumSize = preferredSize
-            }
-            keyPanel.alignmentX = Component.RIGHT_ALIGNMENT
-            add(keyPanel)
-
-            val stringPanel = JBPanel<JBPanel<*>>().apply {
-                layout = FlowLayout(FlowLayout.LEFT)
-                add(JBLabel("Text:"))
-                add(textInput)
-                maximumSize = preferredSize
-            }
-            stringPanel.alignmentX = Component.RIGHT_ALIGNMENT
-            add(stringPanel)
+        val gbc = GridBagConstraints().apply {
+            gridx = 0
+            gridy = 0
+            weightx = 1.0
+            fill = GridBagConstraints.HORIZONTAL
+        }
+        val form = FormBuilder.createFormBuilder()
+            .addLabeledComponent(JBLabel("Key:"), JPanel().apply {
+                layout = GridBagLayout()
+                add(tfStringKey, gbc)
+            })
+            .addLabeledComponent(JBLabel("Content:"), JPanel().apply {
+                layout = GridBagLayout()
+                add(tfStringContent, gbc)
+            })
+            .addLabeledComponent(JBLabel("Description:"), JPanel().apply {
+                layout = GridBagLayout()
+                add(tfStringDescription, gbc)
+            })
+            .addComponent(cbNoTranslation)
+            .addComponentFillVertically(JPanel(), 0)
+        val centerPanel = form.panel.apply {
+            minimumSize = preferredSize
         }
         SwingUtilities.invokeLater {
-            if (keyInput.text.isNullOrEmpty()) {
-                keyInput.requestFocus()
+            if (tfStringKey.text.isNullOrEmpty()) {
+                tfStringKey.requestFocus()
             } else {
-                textInput.requestFocus()
+                tfStringContent.requestFocus()
             }
         }
-        return panel
+        return centerPanel
     }
 
     companion object {

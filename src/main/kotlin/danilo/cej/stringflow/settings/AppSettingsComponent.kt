@@ -1,47 +1,125 @@
 package danilo.cej.stringflow.settings
 
-import com.intellij.ui.components.JBCheckBox
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
+import java.awt.Dimension
+import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 class AppSettingsComponent(initialState: AppState) {
-    private val tfProcess = JBTextField(initialState.process, 15).apply {
-        emptyText.text = "bash"
+    private val tfProcessPath = JBTextField(initialState.processPath).apply {
+        emptyText.text = "/bin/bash"
     }
-    private val tfScriptFile = JBTextField(initialState.scriptFile).apply {
-        emptyText.text = "/Users/john/StringFlowScripts/create_string.sh"
-    }
-    private val tfArguments = JBTextField(initialState.arguments).apply {
-        emptyText.text = "--test1 --test2"
-    }
-    private val cbWorkingDir = JBCheckBox("Use project's working directory", initialState.useWorkingDir)
-    private val cbShowOutput = JBCheckBox("Show command output", initialState.showOutput)
 
-    val panel: JPanel = FormBuilder.createFormBuilder()
-        .addLabeledComponent(JBLabel("Process name:"), tfProcess, 1, false)
-        .addLabeledComponent(JBLabel("Script file:"), tfScriptFile, 1, false)
-        .addLabeledComponent(JBLabel("Arguments:"), tfArguments, 1, false)
-        .addComponent(cbWorkingDir)
-        .addComponent(cbShowOutput)
-        .addComponentFillVertically(JPanel(), 0)
-        .panel
+    private val tfScriptPath = JBTextField(initialState.scriptPath).apply {
+        emptyText.text = "/Users/user/StringFlowScripts/create_string.sh"
+    }
+
+    private val tfArguments = JBTextField(initialState.arguments).apply {
+        emptyText.text = "--verbose --overwrite"
+    }
+
+    private val cbWorkingDir = ComboBox(AppState.Directory.entries.map { it.desc }.toTypedArray()).apply {
+        maximumSize = Dimension(120, Integer.MAX_VALUE)
+        addActionListener { action ->
+            if (action.actionCommand == "comboBoxChanged") {
+                val dir = AppState.Directory.fromString(selectedItem as? String)
+                when (dir) {
+                    AppState.Directory.PROJECT,
+                    AppState.Directory.SCRIPT -> {
+                        btfWorkingDir.isVisible = false
+                    }
+
+                    AppState.Directory.CUSTOM -> {
+                        btfWorkingDir.isVisible = true
+                    }
+                }
+            }
+        }
+    }
+
+    private val tfWorkingDir = JBTextField(initialState.workingDir).apply {
+        emptyText.text = "/Users/user/StringFlowScripts"
+    }
+
+    private val btfWorkingDir = TextFieldWithBrowseButton(tfWorkingDir).apply {
+        isVisible = initialState.workingDirType == AppState.Directory.CUSTOM.value
+        addActionListener {
+            openFileChooser("Select the working directory", "Choose a folder.", files = false) { file ->
+                file?.let { tfWorkingDir.text = it.path }
+            }
+        }
+    }
+
+    val panel: JPanel
+        get() {
+            val btfProcessPath = TextFieldWithBrowseButton(tfProcessPath).apply {
+                addActionListener {
+                    openFileChooser("Select the process executable", "Choose an executable file.") { file ->
+                        file?.let { tfProcessPath.text = it.path }
+                    }
+                }
+            }
+            val btfScriptPath = TextFieldWithBrowseButton(tfScriptPath).apply {
+                addActionListener {
+                    openFileChooser("Select the script file", "Choose an script file.") { file ->
+                        file?.let { tfScriptPath.text = it.path }
+                    }
+                }
+            }
+            val panel = JPanel().apply {
+                layout = BoxLayout(this, BoxLayout.X_AXIS)
+                add(cbWorkingDir)
+                add(btfWorkingDir)
+            }
+            return FormBuilder.createFormBuilder()
+                .addLabeledComponent(JBLabel("Process path:"), btfProcessPath, 1, false)
+                .addLabeledComponent(JBLabel("Script path:"), btfScriptPath, 1, false)
+                .addLabeledComponent(JBLabel("Arguments:"), tfArguments, 1, false)
+                .addLabeledComponent(JBLabel("Working directory:"), panel, 1, false)
+                .addComponentFillVertically(JPanel(), 0)
+                .panel
+        }
+
+    private fun openFileChooser(
+        title: String,
+        description: String,
+        files: Boolean = true,
+        folders: Boolean = true,
+        onFileChosen: (VirtualFile?) -> Unit
+    ) {
+        val fileChooserDescriptor = FileChooserDescriptor(
+            files,
+            folders,
+            false,
+            false,
+            false,
+            false,
+        ).withTitle(title).withDescription(description)
+        val file = FileChooser.chooseFile(fileChooserDescriptor, null, null)
+        onFileChosen.invoke(file)
+    }
 
     val preferredFocusedComponent: JComponent
-        get() = tfProcess
+        get() = tfProcessPath
 
     private var process: String
-        get() = tfProcess.text
+        get() = tfProcessPath.text
         set(value) {
-            tfProcess.text = value
+            tfProcessPath.text = value
         }
 
     private var command: String
-        get() = tfScriptFile.text
+        get() = tfScriptPath.text
         set(value) {
-            tfScriptFile.text = value
+            tfScriptPath.text = value
         }
 
     private var arguments: String
@@ -50,33 +128,40 @@ class AppSettingsComponent(initialState: AppState) {
             tfArguments.text = value
         }
 
-    private var useWorkingDir: Boolean
-        get() = cbWorkingDir.isSelected
+    private var workingDirType: Int
+        get() {
+            val index = cbWorkingDir.selectedIndex
+            assert(index >= 0)
+            val dirType = AppState.Directory.entries.elementAt(index)
+            return dirType.value
+        }
         set(value) {
-            cbWorkingDir.isSelected = value
+            val index = AppState.Directory.entries.firstOrNull { it.value == value }?.value ?: -1
+            assert(index >= 0)
+            cbWorkingDir.selectedIndex = index
         }
 
-    private var showOutput: Boolean
-        get() = cbShowOutput.isSelected
+    private var workingDir: String
+        get() = tfWorkingDir.text
         set(value) {
-            cbShowOutput.isSelected = value
+            tfWorkingDir.text = value
         }
 
     fun applyToState(state: AppState) {
-        state.process = process
-        state.scriptFile = command
+        state.processPath = process
+        state.scriptPath = command
         state.arguments = arguments
-        state.useWorkingDir = useWorkingDir
-        state.showOutput = showOutput
+        state.workingDirType = workingDirType
+        state.workingDir = workingDir
     }
 
     fun toState(): AppState {
         val state = AppState()
-        state.process = process
-        state.scriptFile = command
+        state.processPath = process
+        state.scriptPath = command
         state.arguments = arguments
-        state.useWorkingDir = useWorkingDir
-        state.showOutput = showOutput
+        state.workingDirType = workingDirType
+        state.workingDir = workingDir
         return state
     }
 }

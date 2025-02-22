@@ -7,17 +7,28 @@ import com.intellij.openapi.components.*
 class AppSettings : SimplePersistentStateComponent<AppState>(AppState())
 
 class AppState : BaseState() {
-    var process by string()
-    var scriptFile by string()
+    enum class Directory(val value: Int, val desc: String) {
+        PROJECT(0, "Project"),
+        SCRIPT(1, "Script"),
+        CUSTOM(2, "Custom");
+
+        companion object {
+            fun fromString(desc: String?, fallback: Directory = PROJECT) =
+                entries.firstOrNull { it.desc == desc } ?: fallback
+        }
+    }
+
+    var processPath by string()
+    var scriptPath by string()
     var arguments by string()
-    var useWorkingDir: Boolean by property(false)
-    var showOutput: Boolean by property(false)
+    var workingDirType: Int by property(0)
+    var workingDir by string()
 
     fun compare(other: AppState): Boolean {
-        return (process == other.process &&
-                scriptFile == other.scriptFile &&
+        return (processPath == other.processPath &&
+                scriptPath == other.scriptPath &&
                 arguments == other.arguments &&
-                useWorkingDir == other.useWorkingDir &&
-                showOutput == other.showOutput)
+                workingDirType == other.workingDirType &&
+                workingDir == other.workingDir)
     }
 }
