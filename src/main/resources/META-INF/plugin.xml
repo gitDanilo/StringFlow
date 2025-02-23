@@ -8,13 +8,20 @@
 
     <resource-bundle>messages.Bundle</resource-bundle>
 
-    <!--    <actions>-->
-    <!--        <action id="danilo.cej.stringflow.actions.StringFlowContextAction"-->
-    <!--                class="danilo.cej.stringflow.actions.StringFlowContextAction"-->
-    <!--                text="Run My Context Action">-->
-    <!--            <add-to-group group-id="EditorPopupMenu" anchor="last"/>-->
-    <!--        </action>-->
-    <!--    </actions>-->
+    <actions>
+        <action id="CreateStringAction"
+                class="danilo.cej.stringflow.actions.CreateStringAction"
+                text="Create New String"
+                description="Creates a new string resource">
+        </action>
+        <group id="StringFlowGroup"
+               text="StringFlow"
+               description="StringFlow plugin menu"
+               popup="true">
+            <reference ref="CreateStringAction"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </group>
+    </actions>
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="StringFlow Notification Group"
@@ -37,8 +44,8 @@
         </intentionAction>
     </extensions>
 
-<!--    <applicationListeners>-->
-<!--        <listener class="danilo.cej.stringflow.listeners.ApplicationActivationListener"-->
-<!--                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>-->
-<!--    </applicationListeners>-->
+    <!--    <applicationListeners>-->
+    <!--        <listener class="danilo.cej.stringflow.listeners.ApplicationActivationListener"-->
+    <!--                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>-->
+    <!--    </applicationListeners>-->
 </idea-plugin>

@@ -78,36 +78,5 @@ class ToolWindowFactory : ToolWindowFactory {
 
             return tabbedPane
         }
-
-
-//        fun getContent() = JBPanel<JBPanel<*>>().apply {
-//
-//            val tabbedPane = JBTabbedPane(JBTabbedPane.TOP)
-//            val mainPanel = MainPanel()
-//            val settingsPanel = SettingsPanel()
-//
-//            tabbedPane.addTab("StringFlow", mainPanel)
-//            tabbedPane.addTab("Settings", settingsPanel)
-//
-//            add(tabbedPane, BorderLayout.CENTER)
-//            val label = JBLabel(StringFlowBundle.message("randomLabel", "?"))
-//
-//            add(label)
-//            add(JButton(StringFlowBundle.message("shuffle")).apply {
-//                addActionListener {
-//                    thisLogger().info("shuffle button clicked")
-//                    label.text = StringFlowBundle.message("randomLabel", service.getRandomNumber())
-//                }
-//            })
-//            add(JButton("test").apply {
-//                addActionListener {
-//                    thisLogger().info("test button clicked")
-//                    label.text = "aaaaa"
-//                    val text = runBlocking { service.testRequest() }
-//                    thisLogger().info("test request finished")
-//                    label.text = "result: $text"
-//                }
-//            })
-//        }
     }
 }

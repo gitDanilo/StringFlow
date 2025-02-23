@@ -76,7 +76,7 @@ class CreateStringDialog(keyName: String?) : DialogWrapper(true) {
     }
 
     companion object {
-        fun show(project: Project, keyName: String?) {
+        fun show(project: Project, keyName: String? = null) {
             val dialog = CreateStringDialog(keyName)
             val ok = dialog.showAndGet()
             if (ok) {

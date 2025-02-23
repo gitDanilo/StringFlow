@@ -15,7 +15,7 @@ class QuickFixIntention : IntentionAction {
     override fun getText(): String = "Create new string resource from selection"
 
     override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
-        return editor?.selectionModel?.hasSelection() ?: false
+        return true
     }
 
     override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
@@ -24,10 +24,10 @@ class QuickFixIntention : IntentionAction {
             return
         }
 
-        val selectedText = editor.selectionModel.selectedText
-        if (selectedText.isNullOrEmpty()) {
-            thisLogger().warn("No text selected")
-            return
+        var selectedText = editor.selectionModel.selectedText
+        if (selectedText == null) {
+            editor.selectionModel.selectWordAtCaret(true)
+            selectedText = editor.selectionModel.selectedText
         }
 
         CreateStringDialog.show(project, selectedText)

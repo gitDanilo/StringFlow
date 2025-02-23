@@ -9,9 +9,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.io.awaitExit
 import danilo.cej.stringflow.StringFlowBundle
 import danilo.cej.stringflow.settings.AppSettings
+import danilo.cej.stringflow.settings.AppState
 import kotlinx.coroutines.*
 import java.io.File
 
@@ -26,11 +28,35 @@ class ProjectService(private val project: Project) {
         thisLogger().info(StringFlowBundle.message("projectService", project.name))
     }
 
-//    private val client = HttpClient(CIO) {
-//        engine {
-//            requestTimeout = 5000
-//        }
-//    }
+    private suspend fun executeCommand(command: List<String>, workingDir: String): Pair<Boolean, String> =
+        withContext(Dispatchers.IO) {
+            val process = ProcessBuilder(command)
+                .directory(File(workingDir))
+                .redirectErrorStream(true)
+                .start()
+
+            try {
+                val output = async { process.inputStream.bufferedReader().use { it.readText() } }
+                val exitCode = process.awaitExit()
+                Pair(exitCode == 0, output.await())
+            } catch (e: CancellationException) {
+                process.destroyForcibly()
+                throw e
+            } catch (e: Exception) {
+                Pair(false, "Error executing command: $e")
+            }
+        }
+
+    private val workingDir: String
+        get() {
+            val settings = service<AppSettings>().state
+            val dirType = AppState.Directory.fromValue(settings.workingDirType)
+            return when (dirType) {
+                AppState.Directory.PROJECT -> project.basePath ?: ""
+                AppState.Directory.SCRIPT -> settings.scriptPath?.let { File(it).parent } ?: ""
+                AppState.Directory.CUSTOM -> settings.workingDir ?: ""
+            }
+        }
 
     fun showNotification(
         title: String,
@@ -53,30 +79,13 @@ class ProjectService(private val project: Project) {
         notification.notify(project)
     }
 
-    suspend fun executeCommand(command: List<String>, workingDir: String? = null): Pair<Boolean, String> =
-        withContext(Dispatchers.IO) {
-            try {
-                val process = ProcessBuilder(command)
-                    .directory(File(workingDir ?: System.getProperty("user.home")))
-                    .redirectErrorStream(true)
-                    .start()
-                val output = process.inputStream.bufferedReader().use { it.readText() }
-                val exitCode = process.awaitExit()
-                Pair(exitCode == 0, output)
-            } catch (e: Exception) {
-                Pair(false, "Error executing command: $e")
-            }
-        }
-
     fun createString(key: String, text: String) {
         val settings = service<AppSettings>().state
-        val projectPath = if (settings.useWorkingDir) project.basePath else null
-        val processName = settings.process ?: ""
-        val scriptFile = settings.scriptFile ?: ""
+        val processPath = settings.processPath ?: ""
+        val scriptPath = settings.scriptPath ?: ""
         val arguments = settings.arguments?.split(" ") ?: listOf()
-        val showOutput = settings.showOutput
 
-        if (processName.isEmpty()) {
+        if (processPath.isEmpty()) {
             showNotification(
                 "StringFlow",
                 "Process not configured.",
@@ -89,28 +98,24 @@ class ProjectService(private val project: Project) {
         }
 
         scope.launch {
-            val result = executeCommand(listOf(processName, scriptFile) + arguments + listOf(key, text), projectPath)
-            if (result.first) {
-                showNotification(
-                    "String created",
-                    if (showOutput) result.second else "\"$key\"",
-                    NotificationType.INFORMATION
-                )
-            } else {
-                showNotification(
-                    "Error creating string",
-                    if (showOutput) result.second else "\"$key\".",
-                    NotificationType.ERROR
-                )
+            withBackgroundProgress(project, "Creating string", true) {
+                val command = listOf(processPath) + listOf(scriptPath) + arguments + listOf(key, text)
+                val result = executeCommand(command, workingDir)
+                if (result.first) {
+                    showNotification(
+                        "String created",
+                        "\"$key\"",
+                        NotificationType.INFORMATION
+                    )
+                } else {
+                    showNotification(
+                        "Error creating string",
+                        "\"$key\".",
+                        NotificationType.ERROR
+                    )
+                }
+                thisLogger().info("Command output: ${result.second}")
             }
-            thisLogger().info("Command output: ${result.second}")
         }
     }
-
-//    suspend fun testRequest(): String? = withContext(Dispatchers.IO) {
-//        thisLogger().info("testRequest")
-//        val response = client.get("https://pastebin.com/raw/5WVJxKKF")
-//        val result = if (response.status.value / 100 == 2) response.bodyAsText() else null
-//        return@withContext result
-//    }
 }

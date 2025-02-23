@@ -13,7 +13,13 @@ class AppState : BaseState() {
         CUSTOM(2, "Custom");
 
         companion object {
-            fun fromString(desc: String?, fallback: Directory = PROJECT) =
+            fun fromIndex(index: Int, fallback: Directory = PROJECT) =
+                entries.elementAtOrNull(index) ?: fallback
+
+            fun fromValue(value: Int, fallback: Directory = PROJECT) =
+                entries.firstOrNull { it.value == value } ?: fallback
+
+            fun fromDescription(desc: String, fallback: Directory = PROJECT) =
                 entries.firstOrNull { it.desc == desc } ?: fallback
         }
     }

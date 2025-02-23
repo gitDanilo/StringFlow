@@ -27,11 +27,12 @@ class AppSettingsComponent(initialState: AppState) {
     }
 
     private val cbWorkingDir = ComboBox(AppState.Directory.entries.map { it.desc }.toTypedArray()).apply {
+        selectedIndex = initialState.workingDirType
         maximumSize = Dimension(120, Integer.MAX_VALUE)
         addActionListener { action ->
             if (action.actionCommand == "comboBoxChanged") {
-                val dir = AppState.Directory.fromString(selectedItem as? String)
-                when (dir) {
+                val dirType = AppState.Directory.fromIndex(selectedIndex)
+                when (dirType) {
                     AppState.Directory.PROJECT,
                     AppState.Directory.SCRIPT -> {
                         btfWorkingDir.isVisible = false
@@ -110,42 +111,24 @@ class AppSettingsComponent(initialState: AppState) {
     val preferredFocusedComponent: JComponent
         get() = tfProcessPath
 
-    private var process: String
+    private val process: String
         get() = tfProcessPath.text
-        set(value) {
-            tfProcessPath.text = value
-        }
 
-    private var command: String
+    private val command: String
         get() = tfScriptPath.text
-        set(value) {
-            tfScriptPath.text = value
-        }
 
-    private var arguments: String
+    private val arguments: String
         get() = tfArguments.text
-        set(value) {
-            tfArguments.text = value
-        }
 
-    private var workingDirType: Int
+    private val workingDirType: Int
         get() {
             val index = cbWorkingDir.selectedIndex
-            assert(index >= 0)
-            val dirType = AppState.Directory.entries.elementAt(index)
+            val dirType = AppState.Directory.fromIndex(index)
             return dirType.value
         }
-        set(value) {
-            val index = AppState.Directory.entries.firstOrNull { it.value == value }?.value ?: -1
-            assert(index >= 0)
-            cbWorkingDir.selectedIndex = index
-        }
 
-    private var workingDir: String
+    private val workingDir: String
         get() = tfWorkingDir.text
-        set(value) {
-            tfWorkingDir.text = value
-        }
 
     fun applyToState(state: AppState) {
         state.processPath = process
